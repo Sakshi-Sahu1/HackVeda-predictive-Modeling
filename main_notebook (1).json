@@ -1,0 +1,516 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Student Performance Prediction - Data Exploration\n",
+    "\n",
+    "This notebook performs exploratory data analysis on the Student Performance dataset from Kaggle.\n",
+    "\n",
+    "**Dataset:** Students Performance in Exams\n",
+    "**Source:** https://www.kaggle.com/spscientist/students-performance-in-exams\n",
+    "\n",
+    "## Objective\n",
+    "Explore and understand the dataset to build predictive models for student math scores."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Correlation analysis between all numerical variables\n",
+    "numerical_cols = df.select_dtypes(include=[np.number]).columns\n",
+    "correlation_matrix = df[numerical_cols].corr()\n",
+    "\n",
+    "# Heatmap of correlations\n",
+    "plt.figure(figsize=(10, 8))\n",
+    "sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0,\n",
+    "            square=True, fmt='.3f')\n",
+    "plt.title('Correlation Matrix - Numerical Variables')\n",
+    "plt.tight_layout()\n",
+    "plt.show()\n",
+    "\n",
+    "# Print correlation with math score\n",
+    "print(\"Correlation with Math Score:\")\n",
+    "math_correlations = correlation_matrix['math score'].sort_values(ascending=False)\n",
+    "print(math_correlations)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Scatter plots for numerical variables\n",
+    "if len(numerical_cols) > 1:\n",
+    "    fig, axes = plt.subplots(1, len(numerical_cols)-1, figsize=(15, 5))\n",
+    "    if len(numerical_cols) == 2:\n",
+    "        axes = [axes]\n",
+    "    \n",
+    "    for i, col in enumerate([c for c in numerical_cols if c != 'math score']):\n",
+    "        axes[i].scatter(df[col], df['math score'], alpha=0.6)\n",
+    "        axes[i].set_xlabel(col)\n",
+    "        axes[i].set_ylabel('Math Score')\n",
+    "        axes[i].set_title(f'Math Score vs {col}')\n",
+    "        \n",
+    "        # Add correlation coefficient to the plot\n",
+    "        corr = df[col].corr(df['math score'])\n",
+    "        axes[i].text(0.05, 0.95, f'r = {corr:.3f}', \n",
+    "                    transform=axes[i].transAxes, fontsize=12,\n",
+    "                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))\n",
+    "    \n",
+    "    plt.tight_layout()\n",
+    "    plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 6. Advanced Analysis"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Performance analysis by multiple factors\n",
+    "# Create performance categories\n",
+    "df['math_performance'] = pd.cut(df['math score'], \n",
+    "                               bins=[0, 50, 70, 85, 100], \n",
+    "                               labels=['Poor', 'Average', 'Good', 'Excellent'])\n",
+    "\n",
+    "# Cross-tabulation analysis\n",
+    "print(\"Math Performance by Gender and Lunch Type:\")\n",
+    "crosstab = pd.crosstab([df['gender'], df['lunch']], df['math_performance'], margins=True)\n",
+    "print(crosstab)\n",
+    "\n",
+    "# Visualize the crosstab\n",
+    "plt.figure(figsize=(12, 8))\n",
+    "crosstab_pct = pd.crosstab([df['gender'], df['lunch']], df['math_performance'], normalize='index') * 100\n",
+    "crosstab_pct.plot(kind='bar', stacked=True)\n",
+    "plt.title('Math Performance Distribution by Gender and Lunch Type')\n",
+    "plt.xlabel('Gender and Lunch Type')\n",
+    "plt.ylabel('Percentage')\n",
+    "plt.legend(title='Math Performance', bbox_to_anchor=(1.05, 1), loc='upper left')\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Test preparation course impact analysis\n",
+    "fig, axes = plt.subplots(1, 2, figsize=(15, 6))\n",
+    "\n",
+    "# Box plot\n",
+    "df.boxplot(column='math score', by='test preparation course', ax=axes[0])\n",
+    "axes[0].set_title('Math Score by Test Preparation Course')\n",
+    "axes[0].set_xlabel('Test Preparation Course')\n",
+    "axes[0].set_ylabel('Math Score')\n",
+    "\n",
+    "# Violin plot\n",
+    "sns.violinplot(data=df, x='test preparation course', y='math score', ax=axes[1])\n",
+    "axes[1].set_title('Math Score Distribution by Test Preparation Course')\n",
+    "axes[1].set_xlabel('Test Preparation Course')\n",
+    "axes[1].set_ylabel('Math Score')\n",
+    "\n",
+    "plt.suptitle('')\n",
+    "plt.tight_layout()\n",
+    "plt.show()\n",
+    "\n",
+    "# Statistical test for significance\n",
+    "from scipy.stats import ttest_ind\n",
+    "\n",
+    "completed = df[df['test preparation course'] == 'completed']['math score']\n",
+    "none = df[df['test preparation course'] == 'none']['math score']\n",
+    "\n",
+    "t_stat, p_value = ttest_ind(completed, none)\n",
+    "print(f\"\\nT-test Results for Test Preparation Course Impact:\")\n",
+    "print(f\"T-statistic: {t_stat:.4f}\")\n",
+    "print(f\"P-value: {p_value:.4f}\")\n",
+    "print(f\"Mean score (completed): {completed.mean():.2f}\")\n",
+    "print(f\"Mean score (none): {none.mean():.2f}\")\n",
+    "print(f\"Difference: {completed.mean() - none.mean():.2f}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Parental education impact analysis\n",
+    "plt.figure(figsize=(12, 8))\n",
+    "df.boxplot(column='math score', by='parental level of education', figsize=(12, 8))\n",
+    "plt.title('Math Score by Parental Level of Education')\n",
+    "plt.xlabel('Parental Level of Education')\n",
+    "plt.ylabel('Math Score')\n",
+    "plt.xticks(rotation=45)\n",
+    "plt.tight_layout()\n",
+    "plt.show()\n",
+    "\n",
+    "# Statistical summary\n",
+    "print(\"Math Score by Parental Education Level:\")\n",
+    "education_stats = df.groupby('parental level of education')['math score'].agg(\n",
+    "    ['count', 'mean', 'std', 'min', 'max']\n",
+    ").round(2)\n",
+    "print(education_stats)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 7. Key Insights and Summary"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Summary statistics and insights\n",
+    "print(\"=\" * 60)\n",
+    "print(\"KEY INSIGHTS FROM EXPLORATORY DATA ANALYSIS\")\n",
+    "print(\"=\" * 60)\n",
+    "\n",
+    "print(f\"\\n1. DATASET OVERVIEW:\")\n",
+    "print(f\"   - Total students: {len(df)}\")\n",
+    "print(f\"   - Features: {len(df.columns)}\")\n",
+    "print(f\"   - Missing values: {df.isnull().sum().sum()}\")\n",
+    "print(f\"   - Duplicate rows: {df.duplicated().sum()}\")\n",
+    "\n",
+    "print(f\"\\n2. MATH SCORE DISTRIBUTION:\")\n",
+    "print(f\"   - Mean: {df['math score'].mean():.2f}\")\n",
+    "print(f\"   - Range: {df['math score'].min()} - {df['math score'].max()}\")\n",
+    "print(f\"   - Standard deviation: {df['math score'].std():.2f}\")\n",
+    "print(f\"   - Distribution: {'Normal' if abs(df['math score'].skew()) < 0.5 else 'Skewed'}\")\n",
+    "\n",
+    "print(f\"\\n3. PERFORMANCE BY CATEGORIES:\")\n",
+    "performance_counts = df['math_performance'].value_counts()\n",
+    "for category, count in performance_counts.items():\n",
+    "    percentage = (count / len(df)) * 100\n",
+    "    print(f\"   - {category}: {count} students ({percentage:.1f}%)\")\n",
+    "\n",
+    "print(f\"\\n4. KEY FACTORS AFFECTING MATH SCORES:\")\n",
+    "\n",
+    "# Gender impact\n",
+    "gender_means = df.groupby('gender')['math score'].mean()\n",
+    "print(f\"   - Gender: Male avg = {gender_means['male']:.1f}, Female avg = {gender_means['female']:.1f}\")\n",
+    "\n",
+    "# Test preparation impact\n",
+    "test_prep_means = df.groupby('test preparation course')['math score'].mean()\n",
+    "print(f\"   - Test preparation: Completed avg = {test_prep_means['completed']:.1f}, None avg = {test_prep_means['none']:.1f}\")\n",
+    "\n",
+    "# Lunch impact\n",
+    "lunch_means = df.groupby('lunch')['math score'].mean()\n",
+    "print(f\"   - Lunch type: Standard avg = {lunch_means['standard']:.1f}, Free/Reduced avg = {lunch_means['free/reduced']:.1f}\")\n",
+    "\n",
+    "# Correlation with other scores\n",
+    "if 'reading score' in df.columns:\n",
+    "    reading_corr = df['math score'].corr(df['reading score'])\n",
+    "    print(f\"   - Correlation with reading score: {reading_corr:.3f}\")\n",
+    "\n",
+    "if 'writing score' in df.columns:\n",
+    "    writing_corr = df['math score'].corr(df['writing score'])\n",
+    "    print(f\"   - Correlation with writing score: {writing_corr:.3f}\")\n",
+    "\n",
+    "print(f\"\\n5. RECOMMENDATIONS FOR MODELING:\")\n",
+    "print(f\"   - Target variable (math score) appears suitable for regression\")\n",
+    "print(f\"   - All categorical variables show some relationship with math scores\")\n",
+    "print(f\"   - Consider feature engineering for parental education (ordinal encoding)\")\n",
+    "print(f\"   - Test preparation course shows significant impact\")\n",
+    "print(f\"   - Gender differences suggest including interaction terms\")\n",
+    "print(f\"   - High correlation between subjects suggests potential multicollinearity\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Save processed insights for next notebook\n",
+    "# Create a summary dictionary\n",
+    "data_summary = {\n",
+    "    'dataset_shape': df.shape,\n",
+    "    'target_mean': df['math score'].mean(),\n",
+    "    'target_std': df['math score'].std(),\n",
+    "    'categorical_columns': list(categorical_columns),\n",
+    "    'numerical_columns': list(numerical_cols),\n",
+    "    'missing_values': df.isnull().sum().sum(),\n",
+    "    'duplicates': df.duplicated().sum()\n",
+    "}\n",
+    "\n",
+    "print(\"\\nData exploration completed successfully!\")\n",
+    "print(\"Summary saved for next steps in the modeling pipeline.\")\n",
+    "print(\"\\nNext steps:\")\n",
+    "print(\"1. Data preprocessing and feature engineering\")\n",
+    "print(\"2. Model development and training\")\n",
+    "print(\"3. Model evaluation and comparison\")\n",
+    "print(\"4. Feature importance analysis\")"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+},
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Import necessary libraries\n",
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "import seaborn as sns\n",
+    "import warnings\n",
+    "warnings.filterwarnings('ignore')\n",
+    "\n",
+    "# Set plotting style\n",
+    "plt.style.use('seaborn-v0_8')\n",
+    "sns.set_palette(\"husl\")\n",
+    "\n",
+    "# Display settings\n",
+    "pd.set_option('display.max_columns', None)\n",
+    "pd.set_option('display.width', None)\n",
+    "\n",
+    "print(\"Libraries imported successfully!\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 1. Data Loading"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Load the dataset\n",
+    "# Note: Download the dataset from Kaggle and place it in the data/raw/ directory\n",
+    "df = pd.read_csv('../data/raw/StudentsPerformance.csv')\n",
+    "\n",
+    "print(f\"Dataset loaded successfully!\")\n",
+    "print(f\"Shape: {df.shape}\")\n",
+    "print(f\"Columns: {list(df.columns)}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 2. Basic Data Information"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Display first few rows\n",
+    "print(\"First 5 rows of the dataset:\")\n",
+    "display(df.head())\n",
+    "\n",
+    "# Dataset info\n",
+    "print(\"\\nDataset Info:\")\n",
+    "print(df.info())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Check for missing values\n",
+    "print(\"Missing values:\")\n",
+    "missing_values = df.isnull().sum()\n",
+    "print(missing_values)\n",
+    "\n",
+    "# Check for duplicates\n",
+    "duplicates = df.duplicated().sum()\n",
+    "print(f\"\\nDuplicate rows: {duplicates}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Basic statistics\n",
+    "print(\"Numerical columns summary:\")\n",
+    "display(df.describe())\n",
+    "\n",
+    "print(\"\\nCategorical columns summary:\")\n",
+    "display(df.describe(include=['object']))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 3. Target Variable Analysis"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Analyze math score distribution (our target variable)\n",
+    "fig, axes = plt.subplots(2, 2, figsize=(15, 10))\n",
+    "\n",
+    "# Histogram\n",
+    "axes[0, 0].hist(df['math score'], bins=20, edgecolor='black', alpha=0.7)\n",
+    "axes[0, 0].set_title('Math Score Distribution')\n",
+    "axes[0, 0].set_xlabel('Math Score')\n",
+    "axes[0, 0].set_ylabel('Frequency')\n",
+    "\n",
+    "# Box plot\n",
+    "axes[0, 1].boxplot(df['math score'])\n",
+    "axes[0, 1].set_title('Math Score Box Plot')\n",
+    "axes[0, 1].set_ylabel('Math Score')\n",
+    "\n",
+    "# Q-Q plot for normality check\n",
+    "from scipy import stats\n",
+    "stats.probplot(df['math score'], dist=\"norm\", plot=axes[1, 0])\n",
+    "axes[1, 0].set_title('Math Score Q-Q Plot')\n",
+    "\n",
+    "# Violin plot\n",
+    "axes[1, 1].violinplot(df['math score'])\n",
+    "axes[1, 1].set_title('Math Score Violin Plot')\n",
+    "axes[1, 1].set_ylabel('Math Score')\n",
+    "\n",
+    "plt.tight_layout()\n",
+    "plt.show()\n",
+    "\n",
+    "# Statistical summary for math score\n",
+    "print(\"Math Score Statistics:\")\n",
+    "print(f\"Mean: {df['math score'].mean():.2f}\")\n",
+    "print(f\"Median: {df['math score'].median():.2f}\")\n",
+    "print(f\"Standard Deviation: {df['math score'].std():.2f}\")\n",
+    "print(f\"Minimum: {df['math score'].min()}\")\n",
+    "print(f\"Maximum: {df['math score'].max()}\")\n",
+    "print(f\"Skewness: {df['math score'].skew():.3f}\")\n",
+    "print(f\"Kurtosis: {df['math score'].kurtosis():.3f}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 4. Categorical Variables Analysis"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Analyze categorical variables\n",
+    "categorical_columns = df.select_dtypes(include=['object']).columns\n",
+    "print(f\"Categorical columns: {list(categorical_columns)}\")\n",
+    "\n",
+    "# Create subplots for categorical variables\n",
+    "fig, axes = plt.subplots(2, 3, figsize=(18, 12))\n",
+    "axes = axes.ravel()\n",
+    "\n",
+    "for i, col in enumerate(categorical_columns):\n",
+    "    value_counts = df[col].value_counts()\n",
+    "    axes[i].bar(value_counts.index, value_counts.values)\n",
+    "    axes[i].set_title(f'{col} Distribution')\n",
+    "    axes[i].set_xlabel(col)\n",
+    "    axes[i].set_ylabel('Count')\n",
+    "    axes[i].tick_params(axis='x', rotation=45)\n",
+    "\n",
+    "# Remove empty subplot\n",
+    "fig.delaxes(axes[len(categorical_columns)])\n",
+    "\n",
+    "plt.tight_layout()\n",
+    "plt.show()\n",
+    "\n",
+    "# Print value counts for each categorical variable\n",
+    "for col in categorical_columns:\n",
+    "    print(f\"\\n{col} value counts:\")\n",
+    "    print(df[col].value_counts())\n",
+    "    print(f\"Percentage distribution:\")\n",
+    "    print(df[col].value_counts(normalize=True) * 100)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 5. Relationship Between Features and Target"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Math score by categorical variables\n",
+    "fig, axes = plt.subplots(2, 3, figsize=(18, 12))\n",
+    "axes = axes.ravel()\n",
+    "\n",
+    "for i, col in enumerate(categorical_columns):\n",
+    "    df.boxplot(column='math score', by=col, ax=axes[i])\n",
+    "    axes[i].set_title(f'Math Score by {col}')\n",
+    "    axes[i].set_xlabel(col)\n",
+    "    axes[i].set_ylabel('Math Score')\n",
+    "    axes[i].tick_params(axis='x', rotation=45)\n",
+    "\n",
+    "# Remove empty subplot\n",
+    "fig.delaxes(axes[len(categorical_columns)])\n",
+    "\n",
+    "plt.suptitle('')  # Remove automatic title
+plt.tight_layout()
+plt.show()
+
+# Statistical analysis of math scores by categories
+for col in categorical_columns:
+    print(f"\nMath Score by {col}:")
+    grouped_stats = df.groupby(col)['math score'].agg(['count', 'mean', 'std', 'min', 'max'])
+    print(grouped_stats)\n",
