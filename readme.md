@@ -140,9 +140,9 @@ results = evaluate_model(best_model, X_test, y_test)
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
-- **Author:** [Your Name]
-- **Email:** [your.email@example.com]
-- **LinkedIn:** [Your LinkedIn Profile]
+- **Author:** Sakshi Sahu
+- **Email:** Sakshi100sahu@gmail.com
+- **LinkedIn:** https://www.linkedin.com/in/sakshi-sahu-718674331/
 
 ## Acknowledgments
 - Dataset provided by [Kaggle](https://www.kaggle.com/spscientist/students-performance-in-exams)
