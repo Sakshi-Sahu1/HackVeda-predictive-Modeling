@@ -1,4 +1,4 @@
-```python'''
+```python''''
 # Student Performance Predictive Modeling
 # Dataset: Student Performance in Exams from Kaggle
 # URL: https://www.kaggle.com/spscientist/students-performance-in-exams
@@ -18,7 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.patches import Patch
-
+ 
 # Machine learning libraries
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.preprocessing import LabelEncoder, StandardScaler
