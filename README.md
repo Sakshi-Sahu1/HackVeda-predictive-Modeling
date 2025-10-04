@@ -1,5 +1,5 @@
 # HackVeda-predictive-Modeling
-# Student Performance Predictive Modeling.
+# Student Performance Predictive Modeling
 
 ## Project Overview
 This project builds predictive models to predict student math scores based on various demographic and educational factors using the Student Performance dataset from Kaggle.
