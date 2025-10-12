@@ -1,5 +1,5 @@
-"""
-Feature engineering module for Student Performance Prediction project.
+""".
+Feature engineering module for the Student Performance Prediction project.
 """
 
 import pandas as pd
