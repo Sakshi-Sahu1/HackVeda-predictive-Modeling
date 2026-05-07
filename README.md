@@ -7,7 +7,7 @@ This project builds predictive models to predict student math scores based on va
 ## Dataset
 **Source:** [Students Performance in Exams - Kaggle](https://www.kaggle.com/spscientist/students-performance-in-exams)
 
-**Features:**
+**Features:** *
 - Gender
 - Race/ethnicity
 - Parental level of education
